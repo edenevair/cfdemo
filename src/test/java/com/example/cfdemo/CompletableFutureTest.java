@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -29,9 +28,9 @@ class CompletableFutureTest {
 
     @Test
     void shouldGetContributors() {
+        // создание пустого юзера и заполнение его списком репозиториев
         GithubUser user = GithubUser.of("pivotal");
         user = getRepositoryList(user);
-        System.out.println(user);
 
         CompletableFuture[] contributorFeatures = user.getRepositories().stream()
                 .map(this::contributorRequestBuild)
@@ -41,10 +40,13 @@ class CompletableFutureTest {
 
         CompletableFuture<Void> finalContributors = CompletableFuture.allOf(contributorFeatures);
         finalContributors.join();
-
-        System.out.println(user);
     }
 
+    /**
+     * построить запрос на список контирбуторов по имени репозитория
+     * @param repository
+     * @return
+     */
     @SneakyThrows
     private CompletableFuture<Void> contributorRequestBuild(Repository repository) {
 //        HttpRequest requestContributors = HttpRequest.newBuilder()
@@ -78,6 +80,11 @@ class CompletableFutureTest {
                 .thenAccept(contributors -> repository.provideContributors(contributors));
     }
 
+    /**
+     * проинициализировать список репозиториев пользователя
+     * @param user
+     * @return
+     */
     @SneakyThrows
     private GithubUser getRepositoryList(GithubUser user) {
 //        HttpRequest requestUserRepos = HttpRequest.newBuilder()
@@ -122,12 +129,18 @@ class CompletableFutureTest {
         return user;
     }
 
+    /**
+     * Контрибутор
+     */
     @Value(staticConstructor = "of")
     @Getter
     static class Contributor {
         private String name;
     }
 
+    /**
+     * Репозиторий
+     */
     @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
     static class Repository {
         @Getter
@@ -144,6 +157,9 @@ class CompletableFutureTest {
         }
     }
 
+    /**
+     * Пользователь гитхаба
+     */
     @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
     static class GithubUser {
         @Getter
@@ -164,6 +180,11 @@ class CompletableFutureTest {
         }
     }
 
+    /**
+     * Вспомогательный метод для заглушки вызова списка контирбуторов
+     * @param repoName
+     * @return
+     */
     @SneakyThrows
     private String buildContributorsResponse(String repoName) {
         log.info("Build contrib response for {} in thread {}", repoName,
@@ -182,6 +203,10 @@ class CompletableFutureTest {
         return stringBuilder.toString();
     }
 
+    /**
+     * Вспомогательный метод для апроса списка репозиториев
+     * @return
+     */
     private String buildRepositoriesResponse() {
         log.info("Build repo response in thread {}", Thread.currentThread().getName());
         StringBuilder stringBuilder = new StringBuilder("[");
